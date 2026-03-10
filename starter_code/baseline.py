@@ -9,6 +9,13 @@ from model import GINModel
 
 
 # -------------------------------------------------
+# Device
+# -------------------------------------------------
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Device:", device)
+
+
+# -------------------------------------------------
 # Paths
 # -------------------------------------------------
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -23,6 +30,8 @@ os.makedirs(SUBMISSIONS_DIR, exist_ok=True)
 # -------------------------------------------------
 # Load data splits
 # -------------------------------------------------
+print("Loading CSV splits...")
+
 train_df = pd.read_csv(os.path.join(DATA_DIR, "train.csv"))
 test_df = pd.read_csv(os.path.join(DATA_DIR, "test.csv"))
 
@@ -54,9 +63,29 @@ perturbed_test_dataset = TopologicalDataset(
 # -------------------------------------------------
 # Build graph lists
 # -------------------------------------------------
-train_graphs = [train_dataset[i] for i in train_df.graph_index]
-ideal_test_graphs = [ideal_test_dataset[i] for i in test_df.graph_index]
-perturbed_test_graphs = [perturbed_test_dataset[i] for i in test_df.graph_index]
+print("Preparing training graphs...")
+
+train_graphs = []
+
+for _, row in train_df.iterrows():
+
+    g = train_dataset[int(row.graph_index)]
+
+    # assign label from CSV
+    g.y = torch.tensor([int(row.label)], dtype=torch.long)
+
+    train_graphs.append(g)
+
+
+print("Preparing test graphs...")
+
+ideal_test_graphs = [
+    ideal_test_dataset[int(i)] for i in test_df["graph_index"]
+]
+
+perturbed_test_graphs = [
+    perturbed_test_dataset[int(i)] for i in test_df["graph_index"]
+]
 
 
 # -------------------------------------------------
@@ -87,6 +116,8 @@ model = GINModel(
     output_dim=train_dataset.num_classes
 )
 
+model = model.to(device)
+
 optimizer = torch.optim.Adam(
     model.parameters(),
     lr=0.01
@@ -96,7 +127,7 @@ optimizer = torch.optim.Adam(
 # -------------------------------------------------
 # Training
 # -------------------------------------------------
-print("Training on IDEAL data...")
+print("Training model...")
 
 for epoch in range(50):
 
@@ -104,6 +135,8 @@ for epoch in range(50):
     total_loss = 0
 
     for data in train_loader:
+
+        data = data.to(device)
 
         optimizer.zero_grad()
 
@@ -134,11 +167,13 @@ def predict(model, loader):
 
         for data in loader:
 
+            data = data.to(device)
+
             out = model(data)
 
             pred = out.argmax(dim=1)
 
-            predictions.extend(pred.tolist())
+            predictions.extend(pred.cpu().tolist())
 
     return predictions
 
@@ -160,12 +195,12 @@ ideal_path = os.path.join(SUBMISSIONS_DIR, "ideal_submission.csv")
 perturbed_path = os.path.join(SUBMISSIONS_DIR, "perturbed_submission.csv")
 
 pd.DataFrame({
-    "graph_index": test_df.graph_index,
+    "graph_index": test_df["graph_index"],
     "target": ideal_predictions
 }).to_csv(ideal_path, index=False)
 
 pd.DataFrame({
-    "graph_index": test_df.graph_index,
+    "graph_index": test_df["graph_index"],
     "target": perturbed_predictions
 }).to_csv(perturbed_path, index=False)
 
