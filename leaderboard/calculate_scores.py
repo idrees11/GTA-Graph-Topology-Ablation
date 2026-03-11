@@ -1,49 +1,77 @@
-# scripts/leaderboard/calculate_scores.py
+# leaderboard/calculate_scores.py
 from pathlib import Path
 import pandas as pd
 from sklearn.metrics import f1_score
-
-# Ground truth labels
-GROUND_TRUTH = Path(__file__).resolve().parent.parent / "data" / "train.csv"
+import os
 
 def calculate_scores(submission_path: Path):
     """
     Compute F1 score for a single CSV submission and return as dict
     """
+    print(f"DEBUG: calculate_scores called with submission: {submission_path}")
+    
+    # Get test labels path from environment variable
+    test_labels_path = os.environ.get('TEST_LABELS_CSV')
+    print(f"DEBUG: TEST_LABELS_CSV = {test_labels_path}")
+    
+    if not test_labels_path:
+        # Try default location
+        default_path = Path(__file__).parent.parent / "data" / "test_labels_hidden.csv"
+        if default_path.exists():
+            test_labels_path = str(default_path)
+            print(f"DEBUG: Using default test labels path: {test_labels_path}")
+        else:
+            raise FileNotFoundError(
+                "TEST_LABELS_CSV environment variable not set and no default test labels found"
+            )
+    
+    ground_truth_path = Path(test_labels_path)
+    if not ground_truth_path.exists():
+        raise FileNotFoundError(f"Ground truth file not found: {ground_truth_path}")
+    
+    print(f"DEBUG: Loading submission from {submission_path}")
     submission_df = pd.read_csv(submission_path)
-    gt_df = pd.read_csv(GROUND_TRUTH)
+    
+    print(f"DEBUG: Loading ground truth from {ground_truth_path}")
+    gt_df = pd.read_csv(ground_truth_path)
 
-    # Ensure required columns exist
-    required_cols = ["graph_index", "label"]
-    for col in required_cols:
-        if col not in submission_df.columns:
-            raise ValueError(f"Submission missing column: {col}")
+    print(f"DEBUG: Submission columns: {list(submission_df.columns)}")
+    print(f"DEBUG: Ground truth columns: {list(gt_df.columns)}")
 
-    # Merge predictions with ground truth
-    merged = submission_df.merge(
-        gt_df,
-        on="graph_index",
-        suffixes=("_pred", "_true")
-    )
-
-    y_pred = merged["label_pred"]
-    y_true = merged["label_true"]
-
+    # Merge on graph_index
+    merged = submission_df.merge(gt_df, on="graph_index", how="inner")
+    print(f"DEBUG: Merged shape: {merged.shape}")
+    
+    # Find prediction column
+    pred_col = None
+    for col in submission_df.columns:
+        if col != "graph_index":
+            pred_col = col
+            break
+    
+    if pred_col is None:
+        raise ValueError("No prediction column found in submission")
+    
+    # Find ground truth column
+    truth_col = None
+    for col in gt_df.columns:
+        if col != "graph_index":
+            truth_col = col
+            break
+    
+    if truth_col is None:
+        raise ValueError("No ground truth column found in test labels")
+    
+    print(f"DEBUG: Using prediction column: {pred_col}")
+    print(f"DEBUG: Using ground truth column: {truth_col}")
+    
+    y_pred = merged[pred_col]
+    y_true = merged[truth_col]
+    
+    print(f"DEBUG: y_pred sample: {y_pred.head()}")
+    print(f"DEBUG: y_true sample: {y_true.head()}")
+    
     f1 = f1_score(y_true, y_pred, average="macro")
+    print(f"DEBUG: Calculated F1 score: {f1}")
 
-    # Return as dict for JSON output
     return {"validation_f1_score": f1}
-
-
-def calculate_scores_pair(ideal_path: Path, perturbed_path: Path):
-    """
-    Compute ideal, perturbed F1 and robustness gap
-    """
-    f1_ideal = calculate_scores(ideal_path)["validation_f1_score"]
-    f1_pert = calculate_scores(perturbed_path)["validation_f1_score"]
-    robustness_gap = f1_ideal - f1_pert
-    return {
-        "validation_f1_ideal": f1_ideal,
-        "validation_f1_perturbed": f1_pert,
-        "robustness_gap": robustness_gap
-    }
