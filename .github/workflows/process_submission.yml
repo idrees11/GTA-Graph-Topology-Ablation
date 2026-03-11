@@ -46,7 +46,7 @@ jobs:
       # 5️⃣ Run the submission processing script
       - name: Decrypt, Score, and Update Leaderboard
         env:
-          SUBMISSION_PRIVATE_KEY: ${{ secrets.SUBMISSION_PRIVATE_KEY }}
+          SUBMISSION_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           TEST_LABELS_CSV: ${{ secrets.TEST_LABELS_CSV }}
         run: |
           echo "Decrypting and scoring submissions..."
