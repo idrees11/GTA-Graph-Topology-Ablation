@@ -1,1 +1,2 @@
-
+rank,team_name,validation_f1_ideal,validation_f1_perturbed,robustness_gap
+1,Idrees_Bhat,0.5260454878943507,0.5260454878943507,0.0
