@@ -5,34 +5,52 @@ import subprocess
 import json
 import sys
 
+# Resolve repo root
 repo_root = Path(__file__).parent.parent.resolve()
 sys.path.insert(0, str(repo_root))
 
 from encryption.decrypt import decrypt_file
 from leaderboard.calculate_scores import calculate_scores
 
+# Submissions folder and leaderboard CSV
 SUBMISSIONS_DIR = repo_root / "submissions"
 LEADERBOARD_CSV = repo_root / "leaderboard/leaderboard.csv"
 
 def get_leaderboard_data():
     leaderboard = []
 
+    # Debug: list submissions folder
+    print(f"DEBUG: Repo root: {repo_root}")
+    print(f"DEBUG: Looking for submissions in: {SUBMISSIONS_DIR}")
+    if not SUBMISSIONS_DIR.exists():
+        print("DEBUG: Submissions directory does not exist!")
+        return leaderboard
+    else:
+        print("DEBUG: Found team folders:", [d.name for d in SUBMISSIONS_DIR.iterdir() if d.is_dir()])
+
+    # Iterate over each team
     for team_dir in SUBMISSIONS_DIR.iterdir():
         if not team_dir.is_dir():
             continue
+
+        print(f"\nDEBUG: Processing team folder: {team_dir.name}")
+        print("DEBUG: Files in team folder:", [f.name for f in team_dir.iterdir()])
 
         ideal_enc = team_dir / "ideal.enc"
         pert_enc = team_dir / "perturbed.enc"
 
         if not ideal_enc.exists() or not pert_enc.exists():
-            print(f"Skipping {team_dir.name}: missing files")
+            print(f"Skipping {team_dir.name}: missing files (expected ideal.enc and perturbed.enc)")
             continue
 
-        # Decrypted files
+        # Decrypted CSV files
         ideal_csv = team_dir / "ideal_submissions.csv"
         pert_csv = team_dir / "perturbed_submission.csv"
 
+        # Decrypt
+        print(f"DEBUG: Decrypting {ideal_enc} -> {ideal_csv}")
         decrypt_file(ideal_enc, ideal_csv)
+        print(f"DEBUG: Decrypting {pert_enc} -> {pert_csv}")
         decrypt_file(pert_enc, pert_csv)
 
         # Score ideal
@@ -44,6 +62,7 @@ def get_leaderboard_data():
                 "--require-metadata"
             ])
             ideal_scores = json.loads(ideal_scores_json)
+            print(f"DEBUG: Ideal scores: {ideal_scores}")
         except subprocess.CalledProcessError as e:
             print(f"Error scoring {ideal_csv}: {e}")
             continue
@@ -57,6 +76,7 @@ def get_leaderboard_data():
                 "--require-metadata"
             ])
             pert_scores = json.loads(pert_scores_json)
+            print(f"DEBUG: Perturbed scores: {pert_scores}")
         except subprocess.CalledProcessError as e:
             print(f"Error scoring {pert_csv}: {e}")
             continue
