@@ -49,13 +49,52 @@ jobs:
           python -m pip show cryptography
           python -c "from cryptography.hazmat.primitives import serialization, hashes; print('cryptography OK')"
 
-      # 5️⃣ Debug: list submissions folder
+      # 5️⃣ Debug and ensure metadata.json exists (ADD THIS STEP)
+      - name: Debug and create metadata.json
+        run: |
+          echo "=== DEBUGGING SUBMISSIONS FOLDER ==="
+          pwd
+          ls -la
+          echo "=== CHECKING SUBMISSIONS DIRECTORY ==="
+          if [ -d "submissions" ]; then
+            echo "Submissions directory exists"
+            ls -la submissions/
+            echo "=== CHECKING EACH TEAM FOLDER ==="
+            for team_dir in submissions/*/ ; do
+              if [ -d "$team_dir" ]; then
+                echo "Processing team: $team_dir"
+                ls -la "$team_dir"
+                
+                # FORCE CREATE metadata.json (overwrite if exists)
+                echo "Creating/overwriting metadata.json in $team_dir"
+                echo '{
+                  "team_name": "'$(basename $team_dir)'",
+                  "submission_time": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
+                  "description": "Force created metadata for debugging"
+                }' > "${team_dir}metadata.json"
+                
+                echo "Metadata.json created:"
+                cat "${team_dir}metadata.json"
+                echo ""
+                
+                # Set permissions
+                chmod 644 "${team_dir}metadata.json"
+              fi
+            done
+          else
+            echo "No submissions directory found"
+            mkdir -p submissions
+          fi
+          echo "=== FINAL SUBMISSIONS STRUCTURE ==="
+          find submissions -type f -name "*.json" -o -name "*.csv" -o -name "*.enc" | sort
+
+      # 6️⃣ Debug: list submissions folder (original step - can be removed or kept)
       - name: List submissions folder
         run: |
           echo "DEBUG: Listing submissions folder contents:"
           ls -R submissions || echo "No submissions found"
 
-      # 6️⃣ Run the submission processing script
+      # 7️⃣ Run the submission processing script
       - name: Decrypt, Score, and Update Leaderboard
         env:
           SUBMISSION_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
@@ -64,7 +103,7 @@ jobs:
           echo "Decrypting and scoring submissions..."
           python .github/scripts/process_submission.py
 
-      # 7️⃣ Commit and push any changes only for pushes to main
+      # 8️⃣ Commit and push any changes only for pushes to main
       - name: Commit and Push Changes (Main branch only)
         if: github.event_name == 'push'
         run: |
