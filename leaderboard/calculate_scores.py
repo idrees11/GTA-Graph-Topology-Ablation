@@ -1,21 +1,13 @@
-from sklearn.metrics import f1_score
-import pandas as pd
-
-
-def compute_scores(ideal_pred, perturbed_pred, truth):
-
-    merged_ideal = ideal_pred.merge(truth, on="graph_index")
-    merged_perturbed = perturbed_pred.merge(truth, on="graph_index")
-
-    y_true = merged_ideal["target"]
-
-    f1_ideal = f1_score(y_true, merged_ideal["prediction"])
-    f1_perturbed = f1_score(y_true, merged_perturbed["prediction"])
-
-    robustness_gap = abs(f1_ideal - f1_perturbed)
-
+def calculate_scores_pair(ideal_path: Path, perturbed_path: Path):
+    scores_ideal = calculate_scores(ideal_path)
+    scores_perturbed = calculate_scores(perturbed_path)
+    
+    robustness_gap = scores_ideal["validation_f1_score"] - scores_perturbed["validation_f1_score"]
+    
     return {
-        "f1_ideal": f1_ideal,
-        "f1_perturbed": f1_perturbed,
-        "robustness_gap": robustness_gap
+        "validation_f1_ideal": scores_ideal["validation_f1_score"],
+        "validation_f1_perturbed": scores_perturbed["validation_f1_score"],
+        "robustness_gap": robustness_gap,
+        "validation_accuracy_ideal": scores_ideal["validation_accuracy"],
+        "validation_accuracy_perturbed": scores_perturbed["validation_accuracy"],
     }
