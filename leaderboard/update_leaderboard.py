@@ -28,11 +28,11 @@ def get_leaderboard_data():
         ideal_csv = team_dir / "ideal_submissions.csv"
         pert_csv = team_dir / "perturbed_submission.csv"
 
-        # Decrypt the files
+        # Decrypt files
         decrypt_file(ideal_enc, ideal_csv)
         decrypt_file(pert_enc, pert_csv)
 
-        # Call score_submission.py for ideal CSV
+        # Score the ideal CSV
         try:
             ideal_scores_json = subprocess.check_output([
                 "python",
@@ -45,7 +45,7 @@ def get_leaderboard_data():
             print(f"Error scoring {ideal_csv}: {e}")
             continue
 
-        # Call score_submission.py for perturbed CSV
+        # Score the perturbed CSV
         try:
             pert_scores_json = subprocess.check_output([
                 "python",
