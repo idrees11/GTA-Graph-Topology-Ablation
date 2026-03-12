@@ -172,7 +172,7 @@ cd ..
 ```
 This script will:
 
-Look for ideal_submission.csv and perturbed_submission.csv in your team folder (e.g., submissions/<Team_Name>/).
+Look for ideal_submission.csv and perturbed_submission.csv in 'submissions' folder.
 
 1.   Encrypt them using the public key (encryption/public_key.pem).
 
