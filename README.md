@@ -105,7 +105,7 @@ Only the **best perturbed score** per participant is kept in the leaderboard.
 ---
 
 ## 🚀 Getting Started
-
+ 
 ### Environment Setup
 
 Create a Python virtual environment and install dependencies:
