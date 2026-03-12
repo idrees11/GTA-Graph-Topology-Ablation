@@ -10,9 +10,6 @@ All submissions are encrypted, automatically evaluated, and ranked on a public l
 
 Repository hosted on GitHub.
 
--------------------------------------------------------------------------------------------------------------
-🏆 View Live Leaderboard: [Open leaderboard](https://idrees11.github.io/GTA-Graph-Topology-Ablation_-GTA-/)
---------------------------------------------------------------------------------------------------------------
 ---------------
 🎯 Objective
 ---------------
