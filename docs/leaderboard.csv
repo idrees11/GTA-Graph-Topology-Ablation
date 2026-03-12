@@ -1,4 +1,2 @@
 rank,team_name,validation_f1_ideal,validation_f1_perturbed,robustness_gap
 1,Idrees_Bhat,0.5260454878943507,0.5260454878943507,0.0
-2,VinitSingroha, 0.4260454878943507,0.4260454878943507,0.0
-3,hadil, 0.3260454878943507, 0.3260454878943507,0.0
