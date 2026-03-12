@@ -191,12 +191,11 @@ project_root/
 │   ├── __init__.py
 │   └── encrypt.py           # contains encrypt_file function
 ├── submissions/
-│   ├── sample_submission.csv
-│   ├── file1.csv
-│   ├── file2.csv
+│   ├── ideal_submission.csv
+│   ├── perturbed_submission.csv
 │   └── team_name/           # <-- folder created by script
-│       ├── file1.csv.enc
-│       └── file2.csv.enc
+│       ├── ideal.enc
+│       └── perturbed.enc
 └── encrypt_submissions.py   # script that encrypts files
 ```
 
