@@ -198,7 +198,7 @@ project_root/
 └── encrypt_submissions.py   # script that encrypts files
 ```
 
-4.   Create a new branch, commit only the .enc files, and open a Pull Request (PR) against the main branch.
+3.   Create a new branch, commit only the .enc files, and open a Pull Request (PR) against the main branch.
 
 
 **Important:**
